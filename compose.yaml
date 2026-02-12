@@ -4,12 +4,25 @@ services:
     ports:
       - "4566:4566"            # LocalStack Gateway
       - "4510-4559:4510-4559"  # external services port range
+    expose:
+      - "4566"
     environment:
       # LocalStack configuration: https://docs.localstack.cloud/references/configuration/
-      - DEBUG=${DEBUG:-0}
+      - DEBUG=1
+      - DEFAULT_REGION=us-east-1
+      - SERVICES=s3,lambda,cloudformation,iam,logs,apigateway,sqs,secretsmanager
+      - CFN_IGNORE_UNSUPPORTED_RESOURCE_TYPES=1
     volumes:
       - "./localstack-data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./cloudformation:/etc/localstack/init/ready.d/cloudformation"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - localstack-network
 
 networks:
   localstack-network:
